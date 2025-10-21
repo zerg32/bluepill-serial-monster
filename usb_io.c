@@ -54,14 +54,25 @@ void usb_io_reset() {
 
 void usb_io_init() {
     /* Force USB re-enumeration */
-    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN;
+    
+    /* Blue Pill method: Control PA12 directly */
     GPIOA->CRH &= ~GPIO_CRH_CNF12;
     GPIOA->CRH |= GPIO_CRH_MODE12_1;
+    
+    /* Maple Mini method: Control PB9 for USB disconnect circuit */
+    GPIOB->CRH &= ~GPIO_CRH_CNF9;
+    GPIOB->CRH |= GPIO_CRH_MODE9_1;    // PB9 as output
+    GPIOB->BSRR = GPIO_BSRR_BR9;       // PB9 low = USB disconnect
+    
     for (int i=0; i<0xFFFF; i++) {
         __NOP();
     }
+    
+    /* Reconnect USB */
     GPIOA->CRH &= ~GPIO_CRH_MODE12;
     GPIOA->CRH |= GPIO_CRH_CNF12_0;
+    GPIOB->BSRR = GPIO_BSRR_BS9;       // PB9 high = USB connect (Maple Mini)
     /* Initialize USB */
     NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn);
     if (SystemCoreClock != RCC_MAX_FREQUENCY) {

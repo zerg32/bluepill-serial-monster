@@ -1,19 +1,19 @@
 # bluepill-serial-monster
 
-_bluepill-serial-monster_ is a firmware for _STM32 Blue Pill_ that turns it
+_bluepill-serial-monster_ is a firmware for _STM32 Blue Pill_ and _Maple Mini_ boards that turns them
 into a _3 Port USB-to-Serial_ adapter. The firmware implements a USB 2.0
 full-speed composite device that consists of 3 USB CDC devices.
 
-_STM32 Blue Pill_ is a ridiculously cheap _STM32_ development board which
-is available in many stores around the globe. The board contains decent
-hardware that supports _USB 2.0 Full-Speed_, has 3 independent _USARTs_
+Both _STM32 Blue Pill_ and _Maple Mini_ are popular _STM32_ development boards using the STM32F103C8T6 MCU.
+The boards contain decent hardware that supports _USB 2.0 Full-Speed_, have 3 independent _USARTs_
 and enough processing power to handle high-speed _UART_ communications.
 
 **Note**: some _Blue Pill_ clones have an incorrect pull-up resistor soldered
 to the _USB D+_ line (_PA12_) which prevents them from being successfully
 detected by the host. Please refer to
 [Fixing USB on Blue Pill Boards](#fixing-usb-on-blue-pill-boards)
-for more information.
+for more information. _Maple Mini_ boards typically have the correct 1.5kΩ 
+pull-up resistor and don't suffer from this issue.
 
 Some USB controllers work fine even with faulty _Blue Pill_ boards. If your
 board works with your computer, don't bother fixing it.
@@ -62,48 +62,83 @@ or damage may occur.**
 
 **5 V** tolerant pins are shown **in bold** in the next section.
 
-## UART Pinout
+## Board-Specific Differences
+
+| Feature | Blue Pill | Maple Mini |
+|:--------|:----------|:-----------|
+| Status LED | PC13 (active-low, open-drain) | PB2 (active-high, push-pull)* |
+| Config Pin | PB5 | PB5 |
+| USB Pull-up | Often faulty (4.7kΩ or 10kΩ) | Correct (1.5kΩ) |
+| Physical Size | Larger breadboard-friendly | Smaller, different pinout |
+
+*Note: Firmware uses PB2 for status LED to avoid conflicts. Maple Mini's onboard LED (PB1) 
+will not be controlled by this firmware - requires external LED on PB2.
+
+The firmware automatically detects and uses the appropriate pin configuration.
+
+### USB Disconnect Circuit Differences
+
+Both boards use different methods for USB disconnect/reconnect:
+
+**Blue Pill**:
+- **Method**: Direct PA12 control with external pull-up resistor
+- **Pull-up**: Often incorrect (4.7kΩ or 10kΩ), causing enumeration issues
+- **Reliability**: Variable, depends on resistor value
+
+**Maple Mini**:
+- **Method**: PB9 controls transistor circuit for USB disconnect + correct 1.5kΩ pull-up
+- **Pull-up**: Correct 1.5kΩ resistor for reliable operation  
+- **Disconnect**: PB9 low = disconnect, PB9 high = connect
+- **Reliability**: Superior, designed for reliable USB operation
+
+**Firmware now supports both methods**:
+- **Blue Pill**: Controls PA12 directly, relies on external pull-up resistor
+- **Maple Mini**: Controls PB9 for USB disconnect circuit + PA12 standard method
+
+### Maple Mini LED Configuration
+
+**Status LED**: This firmware uses **PB2** for status LED control instead of Maple Mini's onboard LED (PB1).
+
+**Options**:
+1. **Connect external LED** to **PB2** with current limiting resistor (~330Ω to ground)
+2. **Hardware modification**: Cut PB1 LED trace, connect LED to PB2  
+3. **No status LED**: Firmware will work without visual status indication
+
+The simplified pin configuration eliminates previous conflicts while maintaining full USB-serial functionality.
+
+## UART Pinout (Simplified RX/TX Only Configuration)
 
 | Signal |   Direction   |     UART1     |     UART2     |     UART3     |
 |:-------|:-------------:|:--------------|:--------------|:--------------|
 |   RX   |      IN       |    **PA10**   |      PA3      |    **PB11**   |
 |   TX   |      OUT      |      PA9      |      PA2      |      PB10     |
-|   RTS  |      OUT      |    **PA15**   |      PA1      |      PB14     |
-|   CTS  |      IN       |      N/A      |      PA0      |    **PB13**   |
-|   DSR  |      IN       |    **PB7**    |    **PB4**    |    **PB6**    |
-|   DTR  |      OUT      |      PA4      |      PA5      |      PA6      |
-|   DCD  |      IN       |    **PB15**   |    **PB8**    |    **PB9**    |
-|   RI   |      IN       |    **PB3**    |    **PB12**   |    **PA8**    |
-|   TXA  |      OUT      |    **PB0**    |    **PB1**    |    **PA7**    |
 
 Note: **5 V** tolerant input pins are shown **in bold**.
 
-## Control Signals (Default Configuration)
+**Simplified Configuration**: This firmware now uses only RX/TX pins for basic serial communication. 
+All control signals (RTS, CTS, DSR, DTR, DCD, RI, TXA) have been removed to avoid pin conflicts 
+and simplify the hardware requirements.
 
-**RTS**, **CTS**, **DSR**, **DTR**, **DCD**, **RI** are **active-low** signals,
-**TXA** is an active-high signal.
+**Important**: On Maple Mini, **PB9 is reserved for USB disconnect control** and cannot be used 
+for UART signals. This pin is automatically managed by the firmware for proper USB operation.
 
-**TXA** (**TX** **A**ctive) is active when UART is transmitting data and
-can be used to control **DE** and **/RE** pins of RS-485 transceivers.
+## Simplified Serial Configuration
 
-**TXA** goes inactive within 0.6 us after the transmission is complete,
-which meets RS-485 and IO-link timing requirements at speeds up to 920 kBaud
-with almost double safety margin.
+This firmware configuration uses **only RX and TX pins** for basic serial communication:
 
-**DSR**, **DTR**, and **DCD**, **RI** are connected to the internal _weak pull-up_
-resistors, so they remain inactive at rest.
+- **No hardware flow control** (RTS/CTS removed)
+- **No modem control signals** (DSR, DTR, DCD, RI removed)  
+- **No RS-485 support** (TXA removed)
+- **Simplified wiring** - only 2 wires per UART needed
 
-**CTS** is **pulled down** internally, which enables _UART TX_ when nothing is
-connected to **CTS**. Hardware flow control is always on, but it does not get
-in the way of communications as long as nothing is connected to the flow control lines.
+**Benefits**:
+- **Reduced pin conflicts** - especially important for Maple Mini
+- **Easier hardware implementation** - fewer connections required
+- **Universal compatibility** - works with any 3.3V/5V TTL serial device
 
-**RTS** can be controlled by the host, but as soon as the _UART RX_ buffer is
-**half-full**, **RTS** is forced to the **inactive** state. As long as more than
-one half of the buffer space is available, **RTS** remains in the state set
-by the host. Please take this behaviour into account if you rely on the
-**RTS** signal to control non-standard periphery.
-
-**DSR**, **DCD**, and **RI** are polled 50 times per second.
+**Limitations**:
+- **No flow control** - ensure receiving device can handle data rate
+- **No RS-485** - limited to point-to-point TTL serial communication
 
 _UART DMA RX/TX_ buffer size is **1024** bytes.
 
@@ -199,7 +234,10 @@ controlling various parameters of the UART signal lines.
 
 To access the configuration shell, open the first USB serial port (UART1)
 with any terminal emulator application (such as _screen_, _Tera Term_, etc.)
-and connect **PB5** to ground. Serial port settings do not matter.
+and connect **PB5** to ground. Serial port settings do not matter. 
+
+**Note**: Status LED is on **PB2** for both Blue Pill and Maple Mini. 
+On Maple Mini, connect an external LED to PB2 for status indication.
 
 You should see the configuration shell prompt:
 
