@@ -7,6 +7,7 @@
 #include <stm32f1xx.h>
 #include "system_interrupts.h"
 #include "status_led.h"
+#include "gpio.h"
 #include "usb_descriptors.h"
 #include "usb_core.h"
 #include "usb_panic.h"
@@ -60,19 +61,30 @@ void usb_io_init() {
 //    GPIOA->CRH &= ~GPIO_CRH_CNF12;
 //    GPIOA->CRH |= GPIO_CRH_MODE12_1;
     
-    /* Try Blue Pill method first - control PA12 directly for force re-enumeration */
-    GPIOA->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12);  // Clear PA12 config  
-    GPIOA->CRH |= GPIO_CRH_MODE12_1;                     // PA12 as output, 2MHz
-    GPIOA->BSRR = GPIO_BSRR_BR12;                        // PA12 low = disconnect D+
+    /* Maple Mini method: Control PB9 for USB disconnect circuit using GPIO infrastructure */
+    static const gpio_pin_t usb_disconnect_pin = {
+        .port = GPIOB, 
+        .pin = 9, 
+        .dir = gpio_dir_output, 
+        .speed = gpio_speed_low, 
+        .func = gpio_func_general, 
+        .output = gpio_output_pp, 
+        .polarity = gpio_polarity_low  // PB9 active low for disconnect
+    };
+    
+    /* Initialize PB9 as output */
+    gpio_pin_init(&usb_disconnect_pin);
+    
+    /* Disconnect USB (PB9 low = disconnect) */
+    gpio_pin_set(&usb_disconnect_pin, 1);  // Active low, so 1 = disconnect
     
     /* Longer delay for proper USB disconnect recognition */
     for (int i=0; i<0x3FFFF; i++) {
         __NOP();
     }
     
-    /* Reconnect USB by setting PA12 as floating input (USB peripheral takes over) */
-    GPIOA->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12);  // Clear PA12 config
-    GPIOA->CRH |= GPIO_CRH_CNF12_0;                      // PA12 as floating input
+    /* Reconnect USB (PB9 high = connect) */
+    gpio_pin_set(&usb_disconnect_pin, 0);  // Active low, so 0 = connect
     
     /* Small delay after reconnect */
     for (int i=0; i<0xFFFF; i++) {
