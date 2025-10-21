@@ -57,8 +57,8 @@ void usb_io_init() {
     RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN;
     
     /* Blue Pill method: Control PA12 directly */
-    GPIOA->CRH &= ~GPIO_CRH_CNF12;
-    GPIOA->CRH |= GPIO_CRH_MODE12_1;
+//    GPIOA->CRH &= ~GPIO_CRH_CNF12;
+//    GPIOA->CRH |= GPIO_CRH_MODE12_1;
     
     /* Maple Mini method: Control PB9 for USB disconnect circuit */
     GPIOB->CRH &= ~GPIO_CRH_CNF9;
@@ -72,6 +72,7 @@ void usb_io_init() {
     /* Reconnect USB */
     GPIOA->CRH &= ~GPIO_CRH_MODE12;
     GPIOA->CRH |= GPIO_CRH_CNF12_0;
+
     GPIOB->BSRR = GPIO_BSRR_BS9;       // PB9 high = USB connect (Maple Mini)
     /* Initialize USB */
     NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn);
