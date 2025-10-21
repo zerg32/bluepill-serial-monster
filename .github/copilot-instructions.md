@@ -4,7 +4,7 @@
 - **bluepill-serial-monster** is firmware for STM32 Blue Pill and Maple Mini boards, turning them into a 3-port USB-to-Serial adapter.
 - Implements a USB 2.0 full-speed composite device with 3 USB CDC interfaces, each mapped to a physical UART.
 - No external dependencies except CMSIS; supports DMA RX/TX for high-speed UART.
-- Board-specific pin configurations: Blue Pill uses PC13 LED, Maple Mini uses PB2 LED.
+- Board-specific pin configurations: Blue Pill uses PC13 LED, Maple Mini uses PB1 LED.
 
 ## Architecture & Key Files
 - **main.c**: Entry point, initializes system and USB CDC interfaces.
@@ -29,8 +29,8 @@
 - **Windows USB CDC bug**: RTS changes require DTR update (see README for workaround).
 - **DMA buffer size**: 1024 bytes for RX/TX.
 - **Configuration**: Changes are instant but only persist after `config save`.
-- **Board differences**: Pin configurations in `device_config.c` - Blue Pill (PC13 LED, open-drain), Maple Mini (PB2 LED, push-pull).
-- **Maple Mini LED conflict resolved**: TXA pins removed, so no conflict with onboard LED (PB1) - firmware uses PB2 for status LED.
+- **Board differences**: Pin configurations in `device_config.c` - Blue Pill (PC13 LED, open-drain), Maple Mini (PB1 LED, push-pull).
+- **Maple Mini LED**: Now uses onboard LED (PB1) for status indication - no hardware modification required.
 - **Maple Mini USB disconnect**: PB9 controls USB disconnect circuit (PB9 low = disconnect, high = connect). Reserved pin, not available for UART use.
 - **No external libraries except CMSIS**; all code is bare-metal C for STM32.
 
