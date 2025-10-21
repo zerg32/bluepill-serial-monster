@@ -68,23 +68,23 @@ void usb_io_init() {
         .dir = gpio_dir_output, 
         .speed = gpio_speed_low, 
         .func = gpio_func_general, 
-        .output = gpio_output_pp, 
-        .polarity = gpio_polarity_low  // PB9 active low for disconnect
+        .output = gpio_output_od,      // CRITICAL: Must be open-drain, not push-pull!
+        .polarity = gpio_polarity_high // Normal polarity: 1=disconnect, 0=connect
     };
     
     /* Initialize PB9 as output */
     gpio_pin_init(&usb_disconnect_pin);
     
-    /* Disconnect USB (PB9 low = disconnect) */
-    gpio_pin_set(&usb_disconnect_pin, 1);  // Active low, so 1 = disconnect
+    /* Disconnect USB (PB9 high = disconnect) */
+    gpio_pin_set(&usb_disconnect_pin, 1);  // 1 = disconnect (open-drain high-impedance)
     
     /* Longer delay for proper USB disconnect recognition */
     for (int i=0; i<0x3FFFF; i++) {
         __NOP();
     }
     
-    /* Reconnect USB (PB9 high = connect) */
-    gpio_pin_set(&usb_disconnect_pin, 0);  // Active low, so 0 = connect
+    /* Reconnect USB (PB9 low = connect) */
+    gpio_pin_set(&usb_disconnect_pin, 0);  // 0 = connect (open-drain pulls low)
     
     /* Small delay after reconnect */
     for (int i=0; i<0xFFFF; i++) {
