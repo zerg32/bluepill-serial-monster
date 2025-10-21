@@ -60,18 +60,25 @@ void usb_io_init() {
 //    GPIOA->CRH &= ~GPIO_CRH_CNF12;
 //    GPIOA->CRH |= GPIO_CRH_MODE12_1;
     
-    /* Maple Mini method: Control PB9 for USB disconnect circuit */
-    GPIOB->CRH &= ~GPIO_CRH_CNF9;
-    GPIOB->CRH |= GPIO_CRH_MODE9_1;    // PB9 as output
-    GPIOB->BSRR = GPIO_BSRR_BR9;       // PB9 low = USB disconnect
+    /* Try Blue Pill method first - control PA12 directly for force re-enumeration */
+    GPIOA->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12);  // Clear PA12 config  
+    GPIOA->CRH |= GPIO_CRH_MODE12_1;                     // PA12 as output, 2MHz
+    GPIOA->BSRR = GPIO_BSRR_BR12;                        // PA12 low = disconnect D+
     
     /* Longer delay for proper USB disconnect recognition */
     for (int i=0; i<0x3FFFF; i++) {
         __NOP();
     }
     
-    /* Reconnect USB - Maple Mini only uses PB9, don't touch PA12 */
-    GPIOB->BSRR = GPIO_BSRR_BS9;       // PB9 high = USB connect (Maple Mini)
+    /* Reconnect USB by setting PA12 as floating input (USB peripheral takes over) */
+    GPIOA->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12);  // Clear PA12 config
+    GPIOA->CRH |= GPIO_CRH_CNF12_0;                      // PA12 as floating input
+    
+    /* Small delay after reconnect */
+    for (int i=0; i<0xFFFF; i++) {
+        __NOP();
+    }
+    
     /* Initialize USB */
     NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn);
     if (SystemCoreClock != RCC_MAX_FREQUENCY) {
