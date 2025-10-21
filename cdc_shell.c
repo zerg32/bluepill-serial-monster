@@ -77,7 +77,7 @@ static const char *_cdc_uart_signal_names[cdc_pin_last] = {
     "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", "ri", "txa",
 };
 
-static cdc_pin_t _cdc_uart_signal_by_name(char *name) {
+static cdc_pin_t _cdc_uart_signal_by_name(const char *name) {
     for (int i = 0; i < sizeof(_cdc_uart_signal_names)/sizeof(*_cdc_uart_signal_names); i++) {
         if (strcmp(name, _cdc_uart_signal_names[i]) == 0) {
             return (cdc_pin_t)i;
@@ -90,7 +90,7 @@ static const char *_cdc_uart_output_types[gpio_output_last] = {
     "pp", "od",
 };
 
-static gpio_output_t _cdc_uart_output_type_by_name(char *name) {
+static gpio_output_t _cdc_uart_output_type_by_name(const char *name) {
     for (int i = 0; i< sizeof(_cdc_uart_output_types)/sizeof(*_cdc_uart_output_types); i++) {
         if (strcmp(name, _cdc_uart_output_types[i]) == 0) {
             return (gpio_output_t)i;
@@ -103,7 +103,7 @@ static const char *_cdc_uart_polarities[gpio_polarity_last] = {
     "high", "low",
 };
 
-static gpio_polarity_t _cdc_uart_polarity_by_name(char *name) {
+static gpio_polarity_t _cdc_uart_polarity_by_name(const char *name) {
     for (int i = 0; i< sizeof(_cdc_uart_polarities)/sizeof(*_cdc_uart_polarities); i++) {
         if (strcmp(name, _cdc_uart_polarities[i]) == 0) {
             return (gpio_polarity_t)i;
@@ -116,7 +116,7 @@ static const char *_cdc_uart_pull_types[gpio_pull_last] = {
     "floating", "up", "down",
 };
 
-static gpio_pull_t _cdc_uart_pull_type_by_name(char *name) {
+static gpio_pull_t _cdc_uart_pull_type_by_name(const char *name) {
     for (int i = 0; i< sizeof(_cdc_uart_pull_types)/sizeof(*_cdc_uart_pull_types); i++) {
         if (strcmp(name, _cdc_uart_pull_types[i]) == 0) {
             return (gpio_pull_t)i;

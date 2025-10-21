@@ -195,7 +195,7 @@ static void usb_cdc_notify_port_overrun(int port) {
 
 static void usb_cdc_update_port_dtr(int port) {
     if (port < USB_CDC_NUM_PORTS) {
-        usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
+        const usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         const gpio_pin_t *dtr_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_dtr];
         gpio_pin_set(dtr_pin, cdc_state->dtr_active);
     }
@@ -213,7 +213,7 @@ static void usb_cdc_update_port_rts(int port) {
     if ((port < USB_CDC_NUM_PORTS)) {
         const gpio_pin_t *rts_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_rts];
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
-        circ_buf_t *rx_buf = &cdc_state->rx_buf;
+        const circ_buf_t *rx_buf = &cdc_state->rx_buf;
         int rts_active = ((circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1))) && cdc_state->rts_active;
         gpio_pin_set(rts_pin, rts_active);
     }
@@ -228,7 +228,7 @@ static void usb_cdc_set_port_rts(int port, int rts_active) {
 
 static void usb_cdc_update_port_txa(int port) {
     if (port < USB_CDC_NUM_PORTS) {
-        usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
+        const usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         const gpio_pin_t *txa_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa];
         gpio_pin_set(txa_pin, cdc_state->txa_active);
     }
@@ -358,7 +358,7 @@ static void usb_cdc_sync_rx_buffer(int port) {
     circ_buf_t *rx_buf = &usb_cdc_states[port].rx_buf;
     int rx_buf_tail = rx_buf->tail;
     size_t current_rx_bytes_available = circ_buf_count(rx_buf->head, rx_buf_tail, USB_CDC_BUF_SIZE);
-    DMA_Channel_TypeDef *dma_rx_ch = usb_cdc_get_port_dma_channel(port, usb_cdc_port_direction_rx);
+    const DMA_Channel_TypeDef *dma_rx_ch = usb_cdc_get_port_dma_channel(port, usb_cdc_port_direction_rx);
     size_t dma_head = USB_CDC_BUF_SIZE - dma_rx_ch->CNDTR;
     size_t dma_rx_bytes_available = circ_buf_count(dma_head, rx_buf_tail, USB_CDC_BUF_SIZE);
     usb_cdc_update_port_rts(port);
@@ -384,7 +384,7 @@ void usb_cdc_config_mode_enter() {
 
 void usb_cdc_config_mode_leave() {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
-    DMA_Channel_TypeDef *dma_rx_ch = usb_cdc_get_port_dma_channel(USB_CDC_CONFIG_PORT, usb_cdc_port_direction_rx);
+    const DMA_Channel_TypeDef *dma_rx_ch = usb_cdc_get_port_dma_channel(USB_CDC_CONFIG_PORT, usb_cdc_port_direction_rx);
     size_t dma_head = USB_CDC_BUF_SIZE - dma_rx_ch->CNDTR;
     USART_TypeDef *usart = usb_cdc_get_port_usart(USB_CDC_CONFIG_PORT);
     cdc_state->rx_buf.tail = cdc_state->rx_buf.head = dma_head;
@@ -716,10 +716,10 @@ usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
             case usb_cdc_request_set_control_line_state:
                 return usb_cdc_set_control_line_state(port, setup->wValue);
             case usb_cdc_request_set_line_coding: {
-                usb_cdc_line_coding_t *line_coding = (usb_cdc_line_coding_t *)setup->payload;
+                const usb_cdc_line_coding_t *line_coding = (const usb_cdc_line_coding_t *)setup->payload;
                 if (setup->wLength == sizeof(usb_cdc_line_coding_t)) {
                     int dry_run = 0;
-                    circ_buf_t *tx_buf = &usb_cdc_states[port].tx_buf;
+                    const circ_buf_t *tx_buf = &usb_cdc_states[port].tx_buf;
                     /* 
                      * If the TX buffer is not empty, defer setting
                      * line coding until all data are sent over the serial port.

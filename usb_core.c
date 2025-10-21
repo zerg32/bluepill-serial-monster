@@ -60,7 +60,7 @@ void usb_device_poll() {
 
 /* Device Descriptor Requests Handling */
 
-usb_status_t usb_control_endpoint_process_get_descriptor(usb_setup_t *setup,
+usb_status_t usb_control_endpoint_process_get_descriptor(const usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
     usb_descriptor_type_t descriptor_type = (setup->wValue >> 8);
     uint8_t descriptor_index = (setup->wValue & 0xff);
@@ -100,7 +100,7 @@ static void usb_assign_device_address_cb() {
     usb_device.state = usb_device_state_address_set;
 }
 
-usb_status_t usb_control_endpoint_process_device_request(usb_setup_t *setup,
+usb_status_t usb_control_endpoint_process_device_request(const usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
     switch(setup->bRequest) {
     case usb_device_request_get_configuration:
@@ -135,7 +135,7 @@ usb_status_t usb_control_endpoint_process_device_request(usb_setup_t *setup,
     return usb_status_fail;
 }
 
-usb_status_t usb_control_endpoint_process_interface_request(usb_setup_t *setup,
+usb_status_t usb_control_endpoint_process_interface_request(const usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
     if (setup->bRequest == usb_device_request_get_status) {
         ((uint8_t*)(*payload))[0] = 0;
@@ -146,7 +146,7 @@ usb_status_t usb_control_endpoint_process_interface_request(usb_setup_t *setup,
 }
 
 
-usb_status_t usb_control_endpoint_process_endpoint_request(usb_setup_t *setup,
+usb_status_t usb_control_endpoint_process_endpoint_request(const usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
 
     uint8_t ep_num = setup->wIndex & ~(usb_endpoint_direction_in);

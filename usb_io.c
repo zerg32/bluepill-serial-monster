@@ -92,7 +92,7 @@ size_t usb_bytes_available(uint8_t ep_num) {
 }
 
 size_t usb_space_available(uint8_t ep_num) {
-    ep_reg_t *ep_reg = ep_regs(ep_num);
+    const ep_reg_t *ep_reg = ep_regs(ep_num);
     size_t tx_space_available = 0;
     if ((*ep_reg & USB_EPTX_STAT) == USB_EP_TX_NAK) {
         tx_space_available = usb_endpoints[ep_num].tx_size;
