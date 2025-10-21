@@ -25,6 +25,9 @@ int main() {
         for (volatile int delay = 0; delay < 200000; delay++) __NOP();
     }
     
+    /* Additional delay before USB initialization */
+    for (volatile int delay = 0; delay < 500000; delay++) __NOP();
+    
     usb_init();
     while (1) {
         usb_poll();

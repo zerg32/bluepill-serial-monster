@@ -65,14 +65,12 @@ void usb_io_init() {
     GPIOB->CRH |= GPIO_CRH_MODE9_1;    // PB9 as output
     GPIOB->BSRR = GPIO_BSRR_BR9;       // PB9 low = USB disconnect
     
-    for (int i=0; i<0xFFFF; i++) {
+    /* Longer delay for proper USB disconnect recognition */
+    for (int i=0; i<0x3FFFF; i++) {
         __NOP();
     }
     
-    /* Reconnect USB */
-    GPIOA->CRH &= ~GPIO_CRH_MODE12;
-    GPIOA->CRH |= GPIO_CRH_CNF12_0;
-
+    /* Reconnect USB - Maple Mini only uses PB9, don't touch PA12 */
     GPIOB->BSRR = GPIO_BSRR_BS9;       // PB9 high = USB connect (Maple Mini)
     /* Initialize USB */
     NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn);
