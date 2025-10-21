@@ -16,6 +16,15 @@ int main() {
     system_interrupts_init();
     device_config_init();
     status_led_init();
+    
+    /* Startup indication: 5 LED blinks */
+    for (int i = 0; i < 5; i++) {
+        status_led_set(1);
+        for (volatile int delay = 0; delay < 200000; delay++) __NOP();
+        status_led_set(0);
+        for (volatile int delay = 0; delay < 200000; delay++) __NOP();
+    }
+    
     usb_init();
     while (1) {
         usb_poll();
