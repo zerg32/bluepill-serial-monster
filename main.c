@@ -33,16 +33,9 @@ int main() {
     /* Heartbeat variables for main loop */
     uint32_t heartbeat_counter = 0;
     uint8_t heartbeat_state = 0;
-    uint32_t watchdog_counter = 0;
     
     while (1) {
-        /* Reset watchdog counter each loop iteration */
-        watchdog_counter = 0;
-        
         usb_poll();
-        
-        /* Increment watchdog - if USB polling hangs, this will detect it */
-        watchdog_counter++;
         
         /* 1-second heartbeat in main loop to show polling is active */
         heartbeat_counter++;
