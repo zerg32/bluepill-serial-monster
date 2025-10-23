@@ -15,6 +15,7 @@
 #include "cdc_shell.h"
 #include "device_config.h"
 #include "gpio.h"
+#include "status_led.h"
 #include "usb_cdc.h"
 
 /* USB CDC Device Enabled Flag */
@@ -404,14 +405,28 @@ void usb_cdc_config_mode_process_tx() {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
     circ_buf_t *tx_buf = &cdc_state->tx_buf;
     size_t count;
+    int safety_counter = 0;  /* Prevent infinite loops */
+    
     if (usb_bytes_available(ep_num) < circ_buf_space(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE)) {
         usb_circ_buf_read(ep_num, tx_buf, USB_CDC_BUF_SIZE);
     } else {
         usb_panic();
     }
-    while((count = circ_buf_count_to_end(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE))) {
+    
+    /* Process input with safety counter to prevent infinite loops */
+    while((count = circ_buf_count_to_end(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE)) && safety_counter++ < 10) {
         cdc_shell_process_input(&tx_buf->data[tx_buf->tail], count);
         tx_buf->tail  = (tx_buf->tail + count) & (USB_CDC_BUF_SIZE - 1);
+    }
+    
+    /* If safety counter triggered, flash LED to indicate issue */
+    if (safety_counter >= 10) {
+        for(int i = 0; i < 3; i++) {
+            status_led_set(1);
+            for(volatile int d = 0; d < 50000; d++) __NOP();
+            status_led_set(0);
+            for(volatile int d = 0; d < 50000; d++) __NOP();
+        }
     }
 }
 

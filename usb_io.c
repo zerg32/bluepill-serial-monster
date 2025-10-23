@@ -50,8 +50,8 @@ void usb_io_reset() {
         }
         *ep_reg = USB_EP_RX_VALID | USB_EP_TX_NAK | ep_type | ep_num;
     }
-    /* Configure for polling mode - no interrupts enabled */
-    USB->CNTR = 0;
+    /* Configure for polling mode - enable event flags but no interrupts */
+    USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM | USB_CNTR_SUSPM | USB_CNTR_WKUPM | USB_CNTR_SOFM;
     USB->DADDR = USB_DADDR_EF;
 }
 
@@ -94,7 +94,9 @@ void usb_io_init() {
     }
     
     /* Initialize USB */
+    /* Ensure USB interrupt is disabled for pure polling mode */
     NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn);
+    
     if (SystemCoreClock != RCC_MAX_FREQUENCY) {
         RCC->CFGR |= RCC_CFGR_USBPRE;
     }
@@ -103,8 +105,9 @@ void usb_io_init() {
     USB->BTABLE = 0;
     USB->DADDR = 0;
     USB->ISTR = 0;
-    /* Configure USB control register for polling mode (no interrupts) */
-    USB->CNTR = 0; /* Disable all USB interrupts for polling mode */
+    
+    /* For polling mode: enable event detection but disable interrupts in NVIC */
+    USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM | USB_CNTR_SUSPM | USB_CNTR_WKUPM | USB_CNTR_SOFM;
 }
 
 /* Get Number of RX/TX Bytes Available  */
