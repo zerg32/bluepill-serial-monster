@@ -50,7 +50,8 @@ void usb_io_reset() {
         }
         *ep_reg = USB_EP_RX_VALID | USB_EP_TX_NAK | ep_type | ep_num;
     }
-    USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM | USB_CNTR_SUSPM | USB_CNTR_WKUPM | USB_CNTR_SOFM;
+    /* Configure for polling mode - no interrupts enabled */
+    USB->CNTR = 0;
     USB->DADDR = USB_DADDR_EF;
 }
 
@@ -102,7 +103,8 @@ void usb_io_init() {
     USB->BTABLE = 0;
     USB->DADDR = 0;
     USB->ISTR = 0;
-    USB->CNTR = USB_CNTR_RESETM;
+    /* Configure USB control register for polling mode (no interrupts) */
+    USB->CNTR = 0; /* Disable all USB interrupts for polling mode */
 }
 
 /* Get Number of RX/TX Bytes Available  */
@@ -245,10 +247,18 @@ int usb_endpoint_is_stalled(uint8_t ep_num, usb_endpoint_direction_t ep_directio
     return (*ep_regs(ep_num) & USB_EPRX_STAT) == USB_EP_RX_STALL;
 }
 
-/* USB Interrupt Handler */
+/* USB Interrupt Handler - Should not be called since interrupt is disabled */
 
 void USB_LP_CAN1_RX0_IRQHandler() {
     (void)USB_LP_CAN1_RX0_IRQHandler;
+    /* If we get here, there's a problem - flash LED rapidly as error indicator */
+    for(int i = 0; i < 10; i++) {
+        status_led_set(1);
+        for(volatile int d = 0; d < 100000; d++) __NOP();
+        status_led_set(0);
+        for(volatile int d = 0; d < 100000; d++) __NOP();
+    }
+    /* Then try to handle it anyway */
     usb_poll();
 }
 
