@@ -16,11 +16,12 @@
 #define DEVICE_CONFIG_BASE_ADDR     ((void*)(DEVICE_CONFIG_FLASH_END - DEVICE_CONFIG_NUM_PAGES * DEVICE_CONFIG_PAGE_SIZE))
 #define DEVICE_CONFIG_MAGIC         0xDECFDECFUL
 
-/* NOTE: Maple Mini has LED on PB1, but PB1 is used for UART2 TXA in this firmware.
- * Using PB1 for LED (onboard LED on Maple Mini). */
+/* NOTE: Maple Mini has LED on PB1, button on PB8 (D32).
+ * Using PB1 for LED (onboard LED on Maple Mini).
+ * Using PB8 for config button (reads HIGH when pressed). */
 static const device_config_t default_device_config = {
     .status_led_pin = { .port = GPIOB, .pin = 1, .dir = gpio_dir_output, .speed = gpio_speed_low, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_high },
-    .config_pin = { .port = GPIOB, .pin = 5, .dir = gpio_dir_input, .pull = gpio_pull_up, .polarity = gpio_polarity_low },
+    .config_pin = { .port = GPIOB, .pin = 8, .dir = gpio_dir_input, .pull = gpio_pull_down, .polarity = gpio_polarity_high },
     .cdc_config = {
         .port_config = {
             /*  Port 0 */

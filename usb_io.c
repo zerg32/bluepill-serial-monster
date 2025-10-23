@@ -6,6 +6,7 @@
 
 #include <stm32f1xx.h>
 #include "system_interrupts.h"
+#include "system_clock.h"
 #include "status_led.h"
 #include "gpio.h"
 #include "usb_descriptors.h"
@@ -102,6 +103,10 @@ void usb_io_init() {
     USB->DADDR = 0;
     USB->ISTR = 0;
     USB->CNTR = USB_CNTR_RESETM;
+    
+    /* Enable USB interrupt */
+    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
+    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
 }
 
 /* Get Number of RX/TX Bytes Available  */
@@ -242,6 +247,13 @@ int usb_endpoint_is_stalled(uint8_t ep_num, usb_endpoint_direction_t ep_directio
         return (*ep_regs(ep_num) & USB_EPTX_STAT) == USB_EP_TX_STALL;
     }
     return (*ep_regs(ep_num) & USB_EPRX_STAT) == USB_EP_RX_STALL;
+}
+
+/* USB Interrupt Handler */
+
+void USB_LP_CAN1_RX0_IRQHandler() {
+    (void)USB_LP_CAN1_RX0_IRQHandler;
+    usb_poll();
 }
 
 /* USB Polling */
