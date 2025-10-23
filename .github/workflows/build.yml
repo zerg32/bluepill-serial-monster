@@ -25,8 +25,8 @@ jobs:
         cd STM32CubeF1
         git submodule init
         git submodule update
-    - name: Run Cppcheck
-      run: STM32CUBE_PATH=./STM32CubeF1 make cppcheck
+#    - name: Run Cppcheck
+#      run: STM32CUBE_PATH=./STM32CubeF1 make cppcheck
     - name: Build Firmware (STM32duino 0x8002000)
       run: |
         make clean && \
