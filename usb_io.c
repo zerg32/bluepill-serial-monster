@@ -272,6 +272,22 @@ static uint8_t usb_transfer_led_timer = 0;
 uint16_t istr;
 
 void usb_poll() {
+    static uint32_t poll_counter = 0;
+    
+    /* Simple safety counter to detect infinite loops in usb_poll */
+    poll_counter++;
+    if (poll_counter > 100000) {
+        /* Reset counter and flash LED rapidly to indicate polling loop issue */
+        poll_counter = 0;
+        for (int i = 0; i < 5; i++) {
+            status_led_set(1);
+            for (volatile int d = 0; d < 5000; d++) __NOP();
+            status_led_set(0);
+            for (volatile int d = 0; d < 5000; d++) __NOP();
+        }
+        return; /* Exit early to break potential infinite loop */
+    }
+    
     istr = USB->ISTR;
     if (istr & USB_ISTR_CTR) {
         uint8_t ep_num = USB->ISTR & USB_ISTR_EP_ID;

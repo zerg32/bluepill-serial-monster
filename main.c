@@ -35,14 +35,15 @@ int main() {
     uint8_t heartbeat_state = 0;
     
     while (1) {
-        usb_poll();
-        
-        /* 1-second heartbeat in main loop to show polling is active */
+        /* Heartbeat BEFORE usb_poll to show we reach this point */
         heartbeat_counter++;
         if (heartbeat_counter >= 72000) { /* ~1 second at 72MHz with USB polling load */
             heartbeat_counter = 0;
             heartbeat_state = !heartbeat_state;
             status_led_set(heartbeat_state);
         }
+        
+        /* Very simple USB polling - if this hangs, we'll see heartbeat stop */
+        usb_poll();
     }
 }

@@ -433,7 +433,9 @@ void usb_cdc_config_mode_process_tx() {
 void cdc_shell_write(const void *buf, size_t count) {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
     circ_buf_t *rx_buf = &cdc_state->rx_buf;
-    while (count) {
+    uint32_t safety_counter = 0;
+    
+    while (count && safety_counter++ < 10000) {
         size_t bytes_to_copy;
         size_t space_available = circ_buf_space_to_end(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE);
         if (space_available == 0) {
@@ -441,10 +443,24 @@ void cdc_shell_write(const void *buf, size_t count) {
             space_available = circ_buf_space_to_end(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE);
         }
         bytes_to_copy = (space_available > count) ? count : space_available;
+        if (bytes_to_copy == 0) {
+            /* Emergency break - if we can't copy anything, exit */
+            break;
+        }
         memcpy(&rx_buf->data[rx_buf->head], buf, bytes_to_copy);
         rx_buf->head = (rx_buf->head + bytes_to_copy) & (USB_CDC_BUF_SIZE - 1);
         count -= bytes_to_copy;
         buf = (uint8_t*)buf + bytes_to_copy;
+    }
+    
+    /* Flash LED rapidly if safety counter triggered */
+    if (safety_counter >= 10000) {
+        for (int i = 0; i < 10; i++) {
+            status_led_set(1);
+            for (volatile int d = 0; d < 10000; d++) __NOP();
+            status_led_set(0);
+            for (volatile int d = 0; d < 10000; d++) __NOP();
+        }
     }
 }
 
