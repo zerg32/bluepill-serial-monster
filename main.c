@@ -10,7 +10,6 @@
 #include "status_led.h"
 #include "device_config.h"
 #include "usb.h"
-#include "usb_cdc.h"
 
 int main() {
     system_clock_init();
@@ -30,8 +29,20 @@ int main() {
     for (volatile int delay = 0; delay < 500000; delay++) __NOP();
     
     usb_init();
+    
+    /* Heartbeat variables for main loop */
+    uint32_t heartbeat_counter = 0;
+    uint8_t heartbeat_state = 0;
+    
     while (1) {
-        /* USB protocol events handled by interrupts, but CDC polling needed for data flow */
-        usb_cdc_poll();
+        usb_poll();
+        
+        /* 1-second heartbeat in main loop to show polling is active */
+        heartbeat_counter++;
+        if (heartbeat_counter >= 72000) { /* ~1 second at 72MHz with USB polling load */
+            heartbeat_counter = 0;
+            heartbeat_state = !heartbeat_state;
+            status_led_set(heartbeat_state);
+        }
     }
 }

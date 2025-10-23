@@ -103,10 +103,6 @@ void usb_io_init() {
     USB->DADDR = 0;
     USB->ISTR = 0;
     USB->CNTR = USB_CNTR_RESETM;
-    
-    /* Enable USB interrupt */
-    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
-    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
 }
 
 /* Get Number of RX/TX Bytes Available  */
