@@ -33,7 +33,7 @@ LDFLAGS		= $(CPUFLAGS) -T$(STM32_LDSCRIPT) --specs=nosys.specs --specs=nano.spec
 DEPFLAGS	= -MT $@ -MMD -MP -MF $(BUILD_DIR)/$*.d
 
 CHKREPORT	= cppcheck-report.txt
-CHKFLAGS	= --enable=warning,style,performance,portability --error-exitcode=1 --suppress=missingIncludeSystem:nofile --suppress=unusedFunction --suppress=constParameterCallback --suppress=unmatchedSuppression --suppress=constVariablePointer --suppress=constVariable -D__GNUC__
+CHKFLAGS	= --enable=all --error-exitcode=1 --suppress=missingIncludeSystem:nofile -D__GNUC__
 
 BUILD_DIR	= build
 OBJS		+= $(SRCS:%.c=$(BUILD_DIR)/%.o)
