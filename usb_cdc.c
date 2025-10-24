@@ -404,7 +404,7 @@ void usb_cdc_config_mode_process_tx() {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
     circ_buf_t *tx_buf = &cdc_state->tx_buf;
     size_t count;
-    if (usb_bytes_available(ep_num) < circ_buf_space(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE)) {
+    if (usb_bytes_available(ep_num) <= circ_buf_space(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE)) {
         usb_circ_buf_read(ep_num, tx_buf, USB_CDC_BUF_SIZE);
     } else {
         usb_panic();
