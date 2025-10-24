@@ -8,6 +8,7 @@
 #include "system_interrupts.h"
 #include "status_led.h"
 #include "gpio.h"
+#include "device_config.h"
 #include "usb_descriptors.h"
 #include "usb_core.h"
 #include "usb_panic.h"
@@ -54,33 +55,26 @@ void usb_io_reset() {
 }
 
 void usb_io_init() {
-    /* Force USB re-enumeration */
+    /* Force USB re-enumeration using configured USB disconnect pin */
+    device_config_t *device_config = device_config_get();
+    const gpio_pin_t *usb_disconnect_pin = &device_config->usb_disconnect_pin;
+    
+    /* Enable GPIO clocks */
     RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN;
     
-    /* Maple Mini: Use PB9 for USB disconnect control */
-    static const gpio_pin_t usb_disconnect_pin = {
-        .port = GPIOB,
-        .pin = 9,
-        .dir = gpio_dir_output,
-        .speed = gpio_speed_low,
-        .func = gpio_func_general,
-        .output = gpio_output_od,
-        .polarity = gpio_polarity_high
-    };
+    /* Initialize USB disconnect pin */
+    gpio_pin_init(usb_disconnect_pin);
     
-    /* Initialize PB9 as output */
-    gpio_pin_init(&usb_disconnect_pin);
-    
-    /* Disconnect USB (PB9 high = disconnect) */
-    gpio_pin_set(&usb_disconnect_pin, 1);
+    /* Disconnect USB (high = disconnect for open-drain with high polarity) */
+    gpio_pin_set(usb_disconnect_pin, 1);
     
     /* Delay for USB disconnect */
     for (int i=0; i<0x3FFFF; i++) {
         __NOP();
     }
     
-    /* Reconnect USB (PB9 low = connect) */
-    gpio_pin_set(&usb_disconnect_pin, 0);
+    /* Reconnect USB (low = connect) */
+    gpio_pin_set(usb_disconnect_pin, 0);
     
     /* Delay after reconnect */
     for (int i=0; i<0xFFFF; i++) {
